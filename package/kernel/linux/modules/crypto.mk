@@ -561,7 +561,7 @@ $(eval $(call KernelPackage,crypto-kpp))
 
 define KernelPackage/crypto-krb5
   TITLE:=Kerberos 5 crypto library
-  DEPENDS:=@!LINUX_6_12 +kmod-crypto-manager +kmod-crypto-authenc \
+  DEPENDS:=+kmod-crypto-manager +kmod-crypto-authenc \
 	+kmod-crypto-hmac +kmod-crypto-cmac +kmod-crypto-sha1 \
 	+kmod-crypto-sha256 +kmod-crypto-sha512 +kmod-crypto-cbc \
 	+kmod-crypto-cts

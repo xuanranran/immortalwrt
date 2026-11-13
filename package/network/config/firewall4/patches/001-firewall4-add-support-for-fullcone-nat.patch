@@ -13,19 +13,13 @@ respectively, most IPv6 traffic do NOT need this FullCone NAT functionality.
 
 Renew: ZiMing Mo <msylgj@immortalwrt.org>
 ---
- root/etc/config/firewall                      |  2 ++
- root/usr/share/firewall4/templates/ruleset.uc | 16 ++++++++++++++--
- .../firewall4/templates/zone-fullcone.uc      |  4 ++++
- root/usr/share/ucode/fw4.uc                   | 69 ++++++++++++++++++-
- 4 files changed, 89 insertions(+), 4 deletions(-)
- create mode 100644 root/usr/share/firewall4/templates/zone-fullcone.uc
 
 --- a/root/etc/config/firewall
 +++ b/root/etc/config/firewall
-@@ -5,6 +5,10 @@ config defaults
+@@ -3,6 +3,10 @@
+ 	option input		REJECT
+ 	option output		ACCEPT
  	option forward		REJECT
- # Uncomment this line to disable ipv6 rules
- #	option disable_ipv6	1
 +	option flow_offloading	1
 +	option flow_offloading_hw	1
 +	option fullcone		1
@@ -35,7 +29,7 @@ Renew: ZiMing Mo <msylgj@immortalwrt.org>
  	option name		lan
 --- a/root/usr/share/firewall4/templates/ruleset.uc
 +++ b/root/usr/share/firewall4/templates/ruleset.uc
-@@ -333,6 +333,12 @@ table inet fw4 {
+@@ -333,6 +333,12 @@
  {%   for (let redirect in fw4.redirects(`dstnat_${zone.name}`)): %}
  		{%+ include("redirect.uc", { fw4, zone, redirect }) %}
  {%   endfor %}
@@ -48,7 +42,7 @@ Renew: ZiMing Mo <msylgj@immortalwrt.org>
  {%   fw4.includes('chain-append', `dstnat_${zone.name}`) %}
  	}
  
-@@ -343,20 +349,26 @@ table inet fw4 {
+@@ -343,20 +349,26 @@
  {%   for (let redirect in fw4.redirects(`srcnat_${zone.name}`)): %}
  		{%+ include("redirect.uc", { fw4, zone, redirect }) %}
  {%   endfor %}
@@ -92,7 +86,7 @@ Renew: ZiMing Mo <msylgj@immortalwrt.org>
  const fs = require("fs");
  const uci = require("uci");
  const ubus = require("ubus");
-@@ -503,6 +505,25 @@ function nft_try_hw_offload(devices) {
+@@ -542,6 +544,25 @@
  	return (rc == 0);
  }
  
@@ -118,7 +112,7 @@ Renew: ZiMing Mo <msylgj@immortalwrt.org>
  
  return {
  	read_kernel_version: function() {
-@@ -911,6 +932,18 @@ return {
+@@ -944,6 +965,18 @@
  			warn(`[!] ${msg}\n`);
  	},
  
@@ -137,10 +131,13 @@ Renew: ZiMing Mo <msylgj@immortalwrt.org>
  	get: function(sid, opt) {
  		return this.cursor.get("firewall", sid, opt);
  	},
-@@ -1094,6 +1127,21 @@ return {
- 		}
- 	},
- 
+@@ -1124,6 +1157,21 @@
+ 				this.warn("%s %s (%s) %s", src, s.type || "rule", s.name, msg);
+ 			else
+ 				this.warn("%s %s %s", src, s.type || "rule", msg);
++		}
++	},
++
 +	myinfo_section: function(s, msg) {
 +		if (s[".name"]) {
 +			if (s.name)
@@ -153,13 +150,10 @@ Renew: ZiMing Mo <msylgj@immortalwrt.org>
 +				this.myinfo("ubus %s (%s) %s", s.type || "rule", s.name, msg);
 +			else
 +				this.myinfo("ubus %s %s", s.type || "rule", msg);
-+		}
-+	},
-+
- 	parse_policy: function(val) {
- 		return this.parse_enum(val, [
- 			"accept",
-@@ -1533,6 +1581,7 @@ return {
+ 		}
+ 	},
+ 
+@@ -1632,6 +1680,7 @@
  			"dnat",
  			"snat",
  			"masquerade",
@@ -167,7 +161,7 @@ Renew: ZiMing Mo <msylgj@immortalwrt.org>
  			"npt",
  			"accept",
  			"reject",
-@@ -2020,6 +2069,8 @@ return {
+@@ -2122,6 +2171,8 @@
  		}
  
  		let defs = this.parse_options(data, {
@@ -176,25 +170,27 @@ Renew: ZiMing Mo <msylgj@immortalwrt.org>
  			input: [ "policy", "drop" ],
  			output: [ "policy", "drop" ],
  			forward: [ "policy", "drop" ],
-@@ -2054,6 +2105,11 @@ return {
+@@ -2155,6 +2206,11 @@
+ 			defs.synflood_protect = defs.syn_flood;
  
  		delete defs.syn_flood;
- 
++
 +		if (!nft_try_fullcone()) {
 +			delete defs.fullcone;
 +			warn("nft_try_fullcone failed, disable fullcone globally\n");
 +		}
-+
+ 
  		this.state.defaults = defs;
  	},
- 
-@@ -2299,10 +2355,23 @@ return {
- 		zone.related_subnets = related_subnets;
+@@ -2406,10 +2462,23 @@
  		zone.related_physdevs = related_physdevs;
+ 		zone.related_l3devs = related_l3devs;
  
 -		if (zone.masq || zone.masq6)
 +		if (zone.masq) {
  			zone.dflags.snat = true;
+-
+-		if ((zone.auto_helper && !(zone.masq || zone.masq6)) || length(zone.helper)) {
 +			if (this.state.defaults.fullcone) {
 +				zone.dflags.dnat = true;
 +				this.myinfo_section(data, "IPv4 fullcone enabled for zone '" + zone.name + "'");
@@ -208,8 +204,7 @@ Renew: ZiMing Mo <msylgj@immortalwrt.org>
 +				this.myinfo_section(data, "IPv6 fullcone enabled for zone '" + zone.name + "'");
 +			}
 +		}
- 
--		if ((zone.auto_helper && !(zone.masq || zone.masq6)) || length(zone.helper)) {
++
 +		if ((zone.auto_helper && !(zone.masq || zone.masq6 || this.state.defaults.fullcone || this.state.defaults.fullcone6)) || length(zone.helper)) {
  			zone.dflags.helper = false;
  

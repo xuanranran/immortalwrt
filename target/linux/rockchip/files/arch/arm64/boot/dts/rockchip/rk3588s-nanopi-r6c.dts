@@ -26,3 +26,14 @@
 &rtl8125_1 {
 	/delete-property/ label;
 };
+
+/* Keep R6C's existing SD settings when including the R6S device tree. */
+&sdmmc {
+	/delete-property/ sd-uhs-sdr104;
+	sd-uhs-sdr50;
+};
+
+&vcc_3v3_sd_s0 {
+	regulator-max-microvolt = <3000000>;
+	regulator-min-microvolt = <3000000>;
+};

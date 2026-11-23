@@ -16,6 +16,10 @@ cc492941f8e3 phy: rockchip: usbdp: Factor out lane_mux_sel setup
 f8e38359fde8 phy: rockchip: usbdp: Use guard functions for mutex
 89eb5e8aec23 phy: rockchip: usbdp: Add some extra debug messages
 
+ImmortalWrt packages aux-bridge.ko in kmod-drm-rockchip. Restrict
+USBDP bridge registration to that display driver so the USB3 PHY can
+load in configurations that enable DRM only for GPU or NPU support.
+
 ---
 --- a/drivers/phy/rockchip/phy-rockchip-usbdp.c
 +++ b/drivers/phy/rockchip/phy-rockchip-usbdp.c
@@ -476,7 +480,7 @@ f8e38359fde8 phy: rockchip: usbdp: Use guard functions for mutex
  	struct resource *res;
  	struct rk_udphy *udphy;
  	void __iomem *base;
-@@ -1456,6 +1458,21 @@
+@@ -1456,6 +1458,23 @@
  
  	if (device_property_present(dev, "mode-switch")) {
  		ret = rk_udphy_setup_typec_mux(udphy);
@@ -491,7 +495,9 @@ f8e38359fde8 phy: rockchip: usbdp: Use guard functions for mutex
 +	 * is fine as that is the actual superspeed data connection shared by
 +	 * USB3 and DP based on the mux config.
 +	 */
-+	dp_aux_ep = fwnode_graph_get_endpoint_by_id(dev_fwnode(dev), 3, 0, 0);
++	dp_aux_ep = NULL;
++	if (IS_ENABLED(CONFIG_DRM_ROCKCHIP))
++		dp_aux_ep = fwnode_graph_get_endpoint_by_id(dev_fwnode(dev), 3, 0, 0);
 +	if (dp_aux_ep) {
 +		ret = drm_aux_bridge_register(dev);
 +		fwnode_handle_put(dp_aux_ep);
@@ -507,7 +513,7 @@ f8e38359fde8 phy: rockchip: usbdp: Use guard functions for mutex
 +	depends on DRM || DRM=n
  	select GENERIC_PHY
  	select USB_COMMON
-+	select DRM_AUX_BRIDGE if DRM_BRIDGE
++	select DRM_AUX_BRIDGE if DRM_ROCKCHIP
  	help
  	  Enable this to support the Rockchip USB3.0/DP combo PHY with
  	  Samsung IP block. This is required for USB3 support on RK3588.

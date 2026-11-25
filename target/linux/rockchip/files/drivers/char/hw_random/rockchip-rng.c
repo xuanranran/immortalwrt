@@ -102,6 +102,9 @@
 #define RKRNG_STATE_SW_DRNG_ACK			BIT(3)
 #define RKRNG_STATE_SW_TRNG_ACK			BIT(4)
 
+#define RKRNG_TRNG_DATA_0			0x0050
+#define RK3576_TRNG_POLL_TIMEOUT_US		10000
+
 /* DRNG_DATA_0 ~ DNG_DATA_7 */
 #define RKRNG_DRNG_DATA_0			0x0070
 #define RKRNG_DRNG_DATA_7			0x008C
@@ -407,6 +410,31 @@ exit:
 	return ret;
 }
 
+/*
+ * Use the upstream RK3576 TRNG request and data registers.
+ * The enclosing rk_rng_read() already manages runtime PM.
+ */
+static int rk3576_rng_read(struct hwrng *rng, void *buf, size_t max, bool wait)
+{
+	struct rk_rng *rk_rng = container_of(rng, struct rk_rng, rng);
+	size_t to_read = min_t(size_t, max, RK_MAX_RNG_BYTE);
+	u32 val;
+
+	rk_rng_writel(rk_rng, HIWORD_UPDATE(RKRNG_CTRL_SW_TRNG_REQ,
+					   RKRNG_CTRL_SW_TRNG_REQ, 0), RKRNG_CTRL);
+	if (readl_poll_timeout(rk_rng->mem + RKRNG_STATE, val,
+			       val & RKRNG_STATE_SW_TRNG_ACK,
+			       ROCKCHIP_POLL_PERIOD_US, RK3576_TRNG_POLL_TIMEOUT_US)) {
+		dev_err(rk_rng->dev, "timed out waiting for TRNG data\n");
+		return -ETIMEDOUT;
+	}
+
+	rk_rng_writel(rk_rng, RKRNG_STATE_SW_TRNG_ACK, RKRNG_STATE);
+	memcpy_fromio(buf, rk_rng->mem + RKRNG_TRNG_DATA_0, to_read);
+
+	return to_read;
+}
+
 static const struct rk_rng_soc_data crypto_v1_soc_data = {
 	.default_offset = 0,
 
@@ -433,6 +461,12 @@ static const struct rk_rng_soc_data rkrng_soc_data = {
 	.rk_rng_read = rkrng_read,
 };
 
+static const struct rk_rng_soc_data rk3576_soc_data = {
+	.default_offset = 0,
+	.rk_rng_init = rkrng_init,
+	.rk_rng_read = rk3576_rng_read,
+};
+
 static const struct of_device_id rk_rng_dt_match[] = {
 	{
 		.compatible = "rockchip,cryptov1-rng",
@@ -449,6 +483,10 @@ static const struct of_device_id rk_rng_dt_match[] = {
 		{
 		.compatible = "rockchip,rkrng",
 		.data = (void *)&rkrng_soc_data,
+	},
+	{
+		.compatible = "rockchip,rk3576-rng",
+		.data = &rk3576_soc_data,
 	},
 	{ },
 };

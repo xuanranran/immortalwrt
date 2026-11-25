@@ -290,6 +290,7 @@ endef
 TARGET_DEVICES += friendlyarm_nanopi-r6s
 
 define Device/friendlyarm_nanopi-r76s
+  DEVICE_DTS_DIR := ../dts
   $(Device/rk3576)
   DEVICE_VENDOR := FriendlyARM
   DEVICE_MODEL := NanoPi R76S

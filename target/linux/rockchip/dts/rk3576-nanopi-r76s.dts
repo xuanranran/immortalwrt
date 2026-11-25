@@ -1,0 +1,9 @@
+// SPDX-License-Identifier: (GPL-2.0-only OR MIT)
+
+#include <rockchip/rk3576-nanopi-r76s.dts>
+
+&rng {
+	compatible = "rockchip,rk3576-rng";
+	/delete-property/ clock-names;
+	/delete-property/ reset-names;
+};

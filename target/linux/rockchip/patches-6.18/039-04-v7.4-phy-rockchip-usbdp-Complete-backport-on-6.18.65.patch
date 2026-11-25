@@ -16,9 +16,9 @@ cc492941f8e3 phy: rockchip: usbdp: Factor out lane_mux_sel setup
 f8e38359fde8 phy: rockchip: usbdp: Use guard functions for mutex
 89eb5e8aec23 phy: rockchip: usbdp: Add some extra debug messages
 
-ImmortalWrt packages aux-bridge.ko in kmod-drm-rockchip. Restrict
-USBDP bridge registration to that display driver so the USB3 PHY can
-load in configurations that enable DRM only for GPU or NPU support.
+The Rockchip display driver depends on the optional AUX bridge package.
+Restrict USBDP bridge registration to that display driver so the USB3 PHY
+can load in configurations that enable DRM only for GPU or NPU support.
 
 ---
 --- a/drivers/phy/rockchip/phy-rockchip-usbdp.c

@@ -19,6 +19,11 @@ define Build/boot-common
 	$(CP) $(IMAGE_KERNEL) $@.boot/kernel.img
 endef
 
+define Build/boot-nanopi-r76s
+	$(call Build/boot-common)
+	$(CP) $(KDIR)/image-$(firstword $(DEVICE_DTS)).dtb $@.boot/rockchip.dtb
+endef
+
 define Build/boot-script
 	# Make an U-boot image and copy it to the boot partition
 	mkimage -A arm -O linux -T script -C lzma -a 0 -e 0 -d $(if $(1),$(1),default).bootscript $@.boot/boot.scr

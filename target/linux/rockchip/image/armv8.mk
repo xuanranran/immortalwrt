@@ -294,6 +294,11 @@ define Device/friendlyarm_nanopi-r76s
   $(Device/rk3576)
   DEVICE_VENDOR := FriendlyARM
   DEVICE_MODEL := NanoPi R76S
+  KERNEL_NAME := Image
+  KERNEL := kernel-bin
+  KERNEL_DEPENDS += $$(KDIR)/image-rk3576-nanopi-r76s.dtb
+  BOOT_SCRIPT := nanopi-r76s
+  IMAGE/sysupgrade.img.gz = boot-nanopi-r76s | boot-script $$(BOOT_SCRIPT) | $$(BOOT_FLOW) | gzip | append-metadata
   DEVICE_PACKAGES += kmod-button-hotplug kmod-input-adc-keys kmod-r8125 kmod-rtw88-8822cs wpad-openssl
 endef
 TARGET_DEVICES += friendlyarm_nanopi-r76s

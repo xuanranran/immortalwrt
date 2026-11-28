@@ -11,7 +11,7 @@
 #include "qos.h"
 #include "mirror.h"
 #include "mac.h"
-#include "rtl-otto.h"
+#include "otto_dsa.h"
 #include "stats.h"
 #include "tc.h"
 #include "vlan.h"
@@ -28,8 +28,6 @@
 #define RTL931X_IMR_PORT_LINK_STS_CHG		(0x126C)
 #define RTL931X_ISR_GLB_SRC			(0x12B4)
 #define RTL931X_ISR_PORT_LINK_STS_CHG		(0x12B8)
-
-#define RTL931X_LED_GLB_CTRL			(0x0600)
 
 #define RTL931X_RMA_BPDU_CTRL			(0x881C)
 
@@ -65,7 +63,7 @@
 #define RTL931X_LED_CLK_SEL_200NS				2
 #define RTL931X_LED_CLK_SEL_100NS				3
 
-void rtldsa_931x_print_matrix(struct otto_dsa_priv *priv)
+static void rtldsa_931x_print_matrix(struct otto_dsa_priv *priv)
 {
 	int tbl = otto_table_acquire(RTL9310_TBL_PORT_ISO_CTRL);
 	u32 v[2];
@@ -462,6 +460,10 @@ const struct rtldsa_config rtldsa_931x_cfg = {
 	.enable_flood = otto_l2_931x_enable_flood,
 	.enable_bcast_flood = otto_l2_931x_enable_bcast_flood,
 	.set_receive_management_action = rtldsa_931x_set_receive_management_action,
+	.qos_queue_sched_set = otto_qos_931x_queue_sched_set,
+	.qos_queue_drops_update = otto_qos_931x_queue_drops_update,
+	.tc_egress_shaper_set = otto_tc_931x_egress_shaper_set,
+	.tc_max_burst = U16_MAX,
 	.qos_init = otto_qos_931x_init,
 	.trk_ctrl = RTL931X_TRK_CTRL,
 	.trk_hash_ctrl = RTL931X_TRK_HASH_CTRL,

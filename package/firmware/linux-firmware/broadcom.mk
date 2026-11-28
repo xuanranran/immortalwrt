@@ -121,6 +121,9 @@ define Package/brcmfmac-nvram-43455-sdio/install
 		$(1)/lib/firmware/brcm/
 	$(LN) \
 		brcmfmac43455-sdio.raspberrypi,4-model-b.txt \
+		$(1)/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,4-model-a.txt
+	$(LN) \
+		brcmfmac43455-sdio.raspberrypi,4-model-b.txt \
 		$(1)/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,4-compute-module.txt
 	$(LN) \
 		brcmfmac43455-sdio.raspberrypi,4-model-b.txt \
@@ -140,6 +143,9 @@ define Package/brcmfmac-nvram-43455-sdio/install
 	$(LN) \
 		brcmfmac43455-sdio.raspberrypi,4-model-b.txt \
 		$(1)/lib/firmware/brcm/brcmfmac43455-sdio.Raspberry\ Pi\ Foundation-Raspberry\ Pi\ Compute\ Module\ 5.txt
+	$(LN) \
+		brcmfmac43455-sdio.raspberrypi,4-model-b.txt \
+		$(1)/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,500.txt
 	$(INSTALL_DATA) \
 		$(PKG_BUILD_DIR)/brcm/brcmfmac43455-sdio.MINIX-NEO\ Z83-4.txt \
 		$(1)/lib/firmware/brcm/
@@ -172,16 +178,6 @@ define Package/brcmfmac-firmware-usb/install
 		$(1)/lib/firmware/brcm/
 endef
 $(eval $(call BuildPackage,brcmfmac-firmware-usb))
-
-Package/brcmsmac-firmware = $(call Package/firmware-default,Broadcom BCM43xx softmac PCIe firmware,,LICENCE.broadcom_bcm43xx)
-define Package/brcmsmac-firmware/install
-	$(INSTALL_DIR) $(1)/lib/firmware/brcm
-	$(INSTALL_DATA) \
-		$(PKG_BUILD_DIR)/$(PKG_LINUX_FIRMWARE_SUBDIR)/brcm/bcm43xx-0.fw \
-		$(PKG_BUILD_DIR)/$(PKG_LINUX_FIRMWARE_SUBDIR)/brcm/bcm43xx_hdr-0.fw \
-		$(1)/lib/firmware/brcm/
-endef
-$(eval $(call BuildPackage,brcmsmac-firmware))
 
 Package/bnx2-firmware = $(call Package/firmware-default,Broadcom BCM5706/5708/5709/5716 firmware)
 define Package/bnx2-firmware/install
